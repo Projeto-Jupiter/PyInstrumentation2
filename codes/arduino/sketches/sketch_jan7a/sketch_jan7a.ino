@@ -1,5 +1,3 @@
-#include <Wire.h>
-
 struct Data_array{             // Structure declaration
   unsigned long time;            // Member (int variable)
   float temperature;   // Member (float variable)
@@ -25,5 +23,5 @@ void loop() {
   Serial.print(",");
   Serial.println(Data.temperature);// Print members of myStructure
 
-  delay(500);
+  delay(50);
 }
