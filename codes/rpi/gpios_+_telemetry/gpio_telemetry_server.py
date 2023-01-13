@@ -6,7 +6,7 @@ GPIO.setmode(GPIO.BOARD)
 GPIO.setup(40, GPIO.OUT, initial=GPIO.LOW)           # set GPIO24 as an output   
 
 HOST = '192.168.1.100'                 # Symbolic name meaning all available interfaces
-PORT = 50007              # Arbitrary non-privileged port
+PORT = 50010              # Arbitrary non-privileged port
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.bind((HOST, PORT))
     s.listen(1)
@@ -18,12 +18,10 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 data = pickle.loads(conn.recv(1024))
                 if data[3]:
                     GPIO.output(40,1)
-                    print("On")
                     conn.sendall(pickle.dumps(data))
 
                 elif not data[3]:
                     GPIO.output(40,0)
-                    print("Off")
                     conn.sendall(pickle.dumps(data))                
 
             

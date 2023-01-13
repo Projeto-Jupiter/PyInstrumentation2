@@ -5,10 +5,11 @@ GPIO.setmode(GPIO.BOARD)
 GPIO.setup(40, GPIO.OUT, initial=GPIO.LOW)           # set GPIO24 as an output   
 
 HOST = '192.168.1.100'                 # Symbolic name meaning all available interfaces
-PORT = 50007              # Arbitrary non-privileged port
+PORT = 50006              # Arbitrary non-privileged port
+
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.bind((HOST, PORT))
-    s.listen(1)
+    s.listen(10)
     conn, addr = s.accept()
     with conn:
         print('Connected by', addr)
@@ -19,7 +20,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 print("{} connected!".format(arduino.port))
                 try:
                     while True:
-                        data = pickle.loads(conn.recv(1024))
+                        data = pickle.loads(conn.recv(256))
 
                         data_raw = arduino.readline().decode('utf-8')
                         arduino.flushInput() #remove data after reading
@@ -29,26 +30,26 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         try:
                             for element in data_string:
                                 data_array.append(float(element))
-                            data_array[0] = int(data_array[0])
+                            data_array[0] = int(data_array[0])       
 
+                            for i in range(len(data_array)):
+                                data[i] = data_array[i]
+                            
                             if data[3]:
                                 GPIO.output(40,1)
-                                print("On")
                                 conn.sendall(pickle.dumps(data))
 
                             elif not data[3]:
                                 GPIO.output(40,0)
-                                print("Off")
-                                conn.sendall(pickle.dumps(data))         
-
-                            for i in range(len(data_array)):
-                                data[i] = data_array[i]
+                                conn.sendall(pickle.dumps(data))  
 
                             conn.sendall(pickle.dumps(data))
 
                         except: 
                             print('deu merda')
                             conn.sendall(pickle.dumps([0,0,0,0]))
+
+                            
                         # print(list(data))
                         #time.sleep(0.1) #wait for arduino to answer
                         # while arduino.inWaiting()==0: pass
