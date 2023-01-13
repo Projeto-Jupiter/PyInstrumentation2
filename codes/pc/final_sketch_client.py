@@ -3,7 +3,6 @@ import pyqtgraph as pg
 import numpy as np
 from pyqtgraph.Qt import QtCore, QtWidgets
 
-#Functions
 def qv1():
     """Event activated by the slection of the QV1 checkbox.
     If checked, the element referent of QV1 valve satate is set as True, else, it is set as False."""
@@ -12,19 +11,12 @@ def qv1():
     
     data[3] = not data[3]
 
-    # if toggled: #check if it is toggled
-    #     data[3] = True #set QV1 valve state element as True if toggled
-    #     print ('QV1 on')
-    # else:
-    #     data[3] = False #set QV1 valve state element as True if not toggled
-    #     print('QV1 off')
-
 def update():
 
-    global data,x,y,z
+    global x,y,z,data
     
     data[0:3] = pickle.loads(s.recv(256))[0:3]
-
+    
     x = x[1:]
     x.append(data[0])
     
@@ -36,17 +28,27 @@ def update():
     
     data_line_1.setData(x,y)
     data_line_3.setData(x,z)
+
     print(data)
+
+    s.sendall(pickle.dumps(data))
+
+    data[0:3] = pickle.loads(s.recv(1024))[0:3]
     s.sendall(pickle.dumps(data))
 
 HOST = '192.168.1.100'    # The remote host
-PORT = 50006              # The same port as used by the server
+PORT = 50005              # The same port as used by the server
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.connect((HOST, PORT))
     data = [0,0,0,0]
     s.sendall(pickle.dumps(data))
-
+   
+    # while True:
+    #     data = pickle.loads(s.recv(1024))
+    #     print('Received', data)
+    #     s.sendall(pickle.dumps(data))
+        
     #Creating GUI
     app = pg.mkQApp() #create app variable
 
@@ -59,18 +61,18 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     l1 = QtWidgets.QVBoxLayout() 
     cw.setLayout(l1) #set layout l2 as the central widget layout
 
-    btn_QV1 = QtWidgets.QPushButton('Valvula')
-    btn_QV1.clicked.connect(qv1) #connect qv1 button to function qv1
-
     pw1 = pg.PlotWidget(name='Plot1',title="Line Temperature Now",labels={'left': ('Temperature(K)'), 'bottom': ('Time(ms)')})  ## giving the plots names allows us to link their axes togethe
     pw3 = pg.PlotWidget(name='Plot3',title="Line Pressure Now",labels={'left': ('Pressure(bar)'), 'bottom': ('Time(ms)')})
 
+    btn_QV1 = QtWidgets.QPushButton('Valvula')
+    btn_QV1.clicked.connect(qv1) #connect qv1 button to function qv1
+
+    l1.addWidget(btn_QV1)
     l1.addWidget(pw1)
     l1.addWidget(pw3)
-    l1.addWidget(btn_QV1)
 
     mw.show() #open the main window in full screen
-
+   
     x = list(np.zeros(200))  # 100 time points    
     y = list(np.zeros(200))  # 100 data points
     z = list(np.zeros(200))  # 100 data points

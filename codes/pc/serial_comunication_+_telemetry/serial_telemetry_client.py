@@ -25,8 +25,8 @@ def update():
 
     s.sendall(pickle.dumps(data))
 
-    data = pickle.loads(s.recv(1024))
-    s.sendall(pickle.dumps(data))
+    # data = pickle.loads(s.recv(1024))
+    # s.sendall(pickle.dumps(data))
 
 HOST = '192.168.1.100'    # The remote host
 PORT = 50008              # The same port as used by the server
