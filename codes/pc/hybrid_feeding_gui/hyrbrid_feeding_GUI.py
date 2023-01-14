@@ -108,7 +108,7 @@ def start_save():
 
     now = datetime.datetime.now() #sla pq precisa disso, mas precisa
     data_name = now.strftime("%Y_%m_%d__%H_%M_%S") #save current data and time in a variable
-    line_state_data = open('Data/%s.csv'%data_name, 'w', newline='', encoding='utf-8') #creates csv file
+    line_state_data = open('c:/Users/55989/OneDrive/Documentos/GitHub/PyIntrumentation2/codes/pc/Data/%s.csv'%data_name, 'w', newline='', encoding='utf-8') #creates csv file
     w = csv.writer(line_state_data) #creates the variable that will write in csv
     btn_save.setText('Stop Saving') #chnge the texte in save button to Stop Saving
     save_status = True #set save sattus as true

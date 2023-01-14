@@ -12,10 +12,7 @@ tn.write(user.encode('ascii') + b"\n")
 if password:
     tn.read_until(b"Password: ")
     tn.write(password.encode('ascii') + b"\n")
-
-tn.write(b'sudo shutdown now\n')
-tn.write(password.encode('ascii') + b"\n")
-
-print(tn.read_all().decode('ascii'))
+    
+tn.write(b'/bin/python3 /home/almentacaohibrido/Desktop/prototipo_integrado.py\n')
 
 
