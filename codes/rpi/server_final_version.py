@@ -3,6 +3,11 @@ import RPi.GPIO as GPIO
 
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(40, GPIO.OUT, initial=GPIO.LOW)           # set GPIO24 as an output   
+GPIO.setup(38, GPIO.OUT, initial=GPIO.LOW)           # set GPIO24 as an output   
+GPIO.setup(37, GPIO.OUT, initial=GPIO.LOW)           # set GPIO24 as an output   
+GPIO.setup(36, GPIO.OUT, initial=GPIO.LOW)           # set GPIO24 as an output   
+GPIO.setup(35, GPIO.OUT, initial=GPIO.LOW)           # set GPIO24 as an output   
+
 
 HOST = '192.168.1.100'                 # Symbolic name meaning all available interfaces
 PORT = 50005              # Arbitrary non-privileged port
@@ -10,7 +15,7 @@ serial_state = False
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.bind((HOST, PORT))
-    s.listen(10)
+    s.listen(1)
     conn, addr = s.accept()
     with conn:
         print('Connected by', addr)
@@ -48,15 +53,38 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                                 data[i] = data_array[i]
                             conn.sendall(pickle.dumps(data))
 
-                            if data[3]:
+                            if data[5]:
                                 GPIO.output(40,1)
-                                conn.sendall(pickle.dumps(data))
 
-                            elif not data[3]:
+                            elif not data[5]:
                                 GPIO.output(40,0)
-                                conn.sendall(pickle.dumps(data)) 
+
+                            if data[6]:
+                                GPIO.output(38,1)
+
+                            elif not data[6]:
+                                GPIO.output(38,0)
+                            
+                            if data[7]:
+                                GPIO.output(37,1)
+
+                            elif not data[7]:
+                                GPIO.output(37,0)
+                            
+                            if data[8]:
+                                GPIO.output(36,1)
+
+                            elif not data[8]:
+                                GPIO.output(36,0)
+
+                            if data[9]:
+                                GPIO.output(35,1)
+
+                            elif not data[9]:
+                                GPIO.output(35,0)
+
                         except: 
-                            conn.sendall(pickle.dumps([0,0,0,0]))
+                            conn.sendall(pickle.dumps([0,0,0,0,0,0,0,0,0,0]))
                         # print(list(data))
                         #time.sleep(0.1) #wait for arduino to answer
                         # while arduino.inWaiting()==0: pass
