@@ -21,6 +21,10 @@ void loop() {
   Serial.print(",");
   Serial.print(Data.temperature);
   Serial.print(",");
+  Serial.print(Data.temperature);
+  Serial.print(",");
+  Serial.print(Data.temperature);
+  Serial.print(",");
   Serial.println(Data.temperature);// Print members of myStructure
 
   delay(50);

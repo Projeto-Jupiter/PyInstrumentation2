@@ -3,6 +3,40 @@ import pyqtgraph as pg
 import numpy as np
 from pyqtgraph.Qt import QtCore, QtWidgets
 
+def start_operation():
+    global HOST, PORT, user, password, tn, s, timer
+    
+    tn = telnetlib.Telnet(HOST)
+
+    tn.read_until(b"login: ")
+    tn.write(user.encode('ascii') + b"\n")
+
+    tn.read_until(b"Password: ")
+    tn.write(password.encode('ascii') + b"\n")
+
+    tn.write(b'/bin/python3 /home/almentacaohibrido/Desktop/server_final_version.py\n')
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    s.connect((HOST, PORT))
+    s.sendall(pickle.dumps(data))
+    
+    btn_start.setEnabled(False)
+    btn_None.setEnabled(True)
+    btn_None.setChecked(True)
+    btn_QV1.setEnabled(True)
+    btn_QV2.setEnabled(True)
+    btn_QD.setEnabled(True)
+    btn_save.setEnabled(True)
+    btn_finish.setEnabled(True)
+
+
+
+    timer.start()
+
+def none_valve():
+    pass
+
 def qv1(toggled):
     """Event activated by the slection of the QV1 checkbox.
     If checked, the element referent of QV1 valve satate is set as True, else, it is set as False."""
@@ -35,7 +69,7 @@ def qd():
     global data
 
     data[7] = not data[7]
-    btn_QV2.setChecked(True) #toggle QV2 button
+    btn_None.setChecked(True) #toggle QV2 button
     btn_arm.setEnabled(True) #enable Arm button
 
 def arm():
@@ -50,12 +84,13 @@ def arm():
     global btn_ignite, btn_arm, btn_QD, btn_QV1, btn_QV2, pw1, pw3, pw5, pw7, pw8, dw1, dw2, dw3, dw4, l1, l4, l5, l6, save_status
 
     data[8] = True #set Arm state element as True
+    btn_None.setEnabled(False)
     btn_QV1.setEnabled(False) #disable QV1 button
     btn_QV2.setEnabled(False) #disable QV2 button
     btn_QD.setEnabled(False) #disable QD button
     btn_ignite.setEnabled(True) #enable Ignition button
     btn_save.setEnabled(False) #disaable Stop Saving button
-    btn_QV2.setChecked(True) #toggle QV2 button
+    btn_None.setChecked(True) #toggle QV2 button
     btn_arm.setText('Disarm') #text in Arm button gets changed to 'Disarm'
     btn_arm.clicked.disconnect(arm) #arm event gets disconnected from the Disarm button variable 
     btn_arm.clicked.connect(disarm) #disarm event gets connected to the Disarm button variable   
@@ -73,6 +108,7 @@ def disarm():
 
     print('Ignitor Disarmed')
     data[8] = False #set Arm state element as False
+    btn_None.setEnabled(True)
     btn_QV1.setEnabled(True) #enable QV1 button
     btn_QV2.setEnabled(True) #enable QV2 button
     btn_QD.setEnabled(True)  #enable QD button
@@ -120,14 +156,37 @@ def stop():
 
 
 def finish_operation():
+    
+    global s,timer
+    
+    if save_status: #check if the csv still being edited
+        stop()
 
-    s.sendall(pickle.dumps([0,0,0,0,0,0,0,0,0,0]))    
+    s.sendall(pickle.dumps([0,0,0,0,0,0,0,0,0,0]))   
+    timer.stop()
     tn.write(b'\x03\n')
-    sys.exit('Operation Finished')
+
+    btn_None.setEnabled(False)
+    btn_None.setChecked(True)
+    btn_QV1.setEnabled(False)
+    btn_QV2.setEnabled(False)
+    btn_QD.setEnabled(False)
+    btn_save.setEnabled(False)
+    btn_finish.setEnabled(False)
+    btn_shutdown.setEnabled(True)
+
+    
+
+def shutdown_rpi():
+
+    global tn
+
+    tn.write(b'sudo shutdown now\n')
+    tn.write(password.encode('ascii') + b"\n")
 
 def update():
 
-    global x,y,z,a,b,data
+    global x,y,z,a,b,data,s
     
     data[0:5] = pickle.loads(s.recv(256))[0:5]
     
@@ -154,11 +213,13 @@ def update():
     # print(data)
 
     s.sendall(pickle.dumps(data))
+    
+    print(data)
 
     data[0:5] = pickle.loads(s.recv(1024))[0:5]
     s.sendall(pickle.dumps(data))
 
-now, data_name,line_state_data,w,save_status = [0,0,0,0,False] #gambiarra
+now, data_name,line_state_data,w,save_status,tn,s = [0,0,0,0,False,0,0] #gambiarra
 data = [0,0,0,0,0,0,0,0,0,0]
 
 
@@ -169,114 +230,113 @@ PORT = 50005              # The same port as used by the server
 user = 'almentacaohibrido'
 password = 'h1br1_pr0p'
 
-tn = telnetlib.Telnet(HOST)
+#Creating GUI
+app = pg.mkQApp() #create app variable
 
-tn.read_until(b"login: ")
-tn.write(user.encode('ascii') + b"\n")
+mw = QtWidgets.QMainWindow() #criate main window variable
+mw.setWindowTitle('Hybrid Control GUI') #set window title
+cw = QtWidgets.QWidget() #create central widget
+mw.setCentralWidget(cw) #set central widget
 
-if password:
-    tn.read_until(b"Password: ")
-    tn.write(password.encode('ascii') + b"\n")
+#the rows below create some layouts
+l1 = QtWidgets.QVBoxLayout() 
+l2 = QtWidgets.QHBoxLayout()
+l3 = QtWidgets.QVBoxLayout()
+l4 = QtWidgets.QVBoxLayout()
+l5 = QtWidgets.QHBoxLayout()
+l6 = QtWidgets.QHBoxLayout()
+l7 = QtWidgets.QVBoxLayout()
+l8 = QtWidgets.QVBoxLayout()
 
-tn.write(b'/bin/python3 /home/almentacaohibrido/Desktop/server_final_version.py\n')
+cw.setLayout(l2) #set layout l2 as the central widget layout
 
-time.sleep(5)
+pw1 = pg.PlotWidget(name='Plot1',title="Line Temperature Now",labels={'left': ('Temperature(K)'), 'bottom': ('Time(ms)')})  ## giving the plots names allows us to link their axes togethe
+pw3 = pg.PlotWidget(name='Plot3',title="Line Pressure Now",labels={'left': ('Pressure(bar)'), 'bottom': ('Time(ms)')})
+pw5 = pg.PlotWidget(name='Plot5',title="Engine Thrust Now",labels={'left': ('Thrust(N)'), 'bottom': ('Time(ms)')})
+pw7 = pg.PlotWidget(name='Plot7',title="Engine Pressure Now",labels={'left': ('Pressure(bar)'), 'bottom': ('Time(ms)')})
 
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    s.connect((HOST, PORT))
-    s.sendall(pickle.dumps(data))
-        
-    #Creating GUI
-    app = pg.mkQApp() #create app variable
+#rows below creates some buttons
+btn_start = QtWidgets.QPushButton('Start Operation')
+btn_None = QtWidgets.QRadioButton('None')
+btn_None.setEnabled(False)
+btn_QV1 = QtWidgets.QRadioButton('QV1')
+btn_QV1.setEnabled(False)
+btn_QV2 = QtWidgets.QRadioButton('QV2')
+btn_QV2.setEnabled(False)
+btn_QD = QtWidgets.QPushButton('Quick Disconnect')
+btn_QD.setEnabled(False)
+btn_arm = QtWidgets.QPushButton('Arm')
+btn_arm.setEnabled(False) #disable arm button as default
+btn_ignite = QtWidgets.QPushButton('Ignite')
+btn_ignite.setEnabled(False) #disable ignite button as default
+btn_save = QtWidgets.QPushButton('Save Data') 
+btn_save.setEnabled(False)
+btn_finish = QtWidgets.QPushButton('Finish Operation')
+btn_finish.setEnabled(False)
+btn_shutdown = QtWidgets.QPushButton('Shutdown RPi')
+btn_shutdown.setEnabled(False)
 
-    mw = QtWidgets.QMainWindow() #criate main window variable
-    mw.setWindowTitle('Hybrid Control GUI') #set window title
-    cw = QtWidgets.QWidget() #create central widget
-    mw.setCentralWidget(cw) #set central widget
 
-    #the rows below create some layouts
-    l1 = QtWidgets.QVBoxLayout() 
-    l2 = QtWidgets.QHBoxLayout()
-    l3 = QtWidgets.QVBoxLayout()
-    l4 = QtWidgets.QVBoxLayout()
-    l5 = QtWidgets.QHBoxLayout()
-    l6 = QtWidgets.QHBoxLayout()
-    l7 = QtWidgets.QVBoxLayout()
-    l8 = QtWidgets.QVBoxLayout()
+#rows below associate events to buttons
+btn_start.clicked.connect(start_operation)
+btn_None.toggled.connect(none_valve) #connect qv1 button to function qv1
+btn_QV1.toggled.connect(qv1) #connect qv1 button to function qv1
+btn_QV2.toggled.connect(qv2) #connect qv2 button to function qv2
+btn_QD.clicked.connect(qd) #connect quickdisconnect button to function qd
+btn_arm.clicked.connect(arm) #connect arm button to function arm
+btn_ignite.clicked.connect(ignite) #connect ignite button to function ignite
+btn_save.clicked.connect(start_save) #connect save button to function start_save
+btn_finish.clicked.connect(finish_operation)
+btn_shutdown.clicked.connect(shutdown_rpi)
 
-    cw.setLayout(l2) #set layout l2 as the central widget layout
+l3.addWidget(btn_start)
+l3.addWidget(btn_None)
+l3.addWidget(btn_QV1)
+l3.addWidget(btn_QV2)
+l3.addWidget(btn_QD)
+l3.addWidget(btn_arm)
+l3.addWidget(btn_ignite)
+l3.addWidget(btn_save)
+l3.addWidget(btn_finish)
+l3.addWidget(btn_shutdown)
 
-    pw1 = pg.PlotWidget(name='Plot1',title="Line Temperature Now",labels={'left': ('Temperature(K)'), 'bottom': ('Time(ms)')})  ## giving the plots names allows us to link their axes togethe
-    pw3 = pg.PlotWidget(name='Plot3',title="Line Pressure Now",labels={'left': ('Pressure(bar)'), 'bottom': ('Time(ms)')})
-    pw5 = pg.PlotWidget(name='Plot5',title="Engine Thrust Now",labels={'left': ('Thrust(N)'), 'bottom': ('Time(ms)')})
-    pw7 = pg.PlotWidget(name='Plot7',title="Engine Pressure Now",labels={'left': ('Pressure(bar)'), 'bottom': ('Time(ms)')})
+l4.addWidget(pw3)
+l4.addWidget(pw7)
 
-    #rows below creates some buttons
-    btn_QV1 = QtWidgets.QRadioButton('QV1')
-    btn_QV2 = QtWidgets.QRadioButton('QV2')
-    btn_QD = QtWidgets.QPushButton('Quick Disconnect')
-    btn_arm = QtWidgets.QPushButton('Arm')
-    btn_arm.setEnabled(False) #disable arm button as default
-    btn_ignite = QtWidgets.QPushButton('Ignite')
-    btn_ignite.setEnabled(False) #disable ignite button as default
-    btn_save = QtWidgets.QPushButton('Save Data') 
-    btn_finish = QtWidgets.QPushButton('Finish Operation')
+l1.addWidget(pw1)
+l1.addWidget(pw5)
 
-    #rows below associate events to buttons
-    btn_QV1.toggled.connect(qv1) #connect qv1 button to function qv1
-    btn_QV2.toggled.connect(qv2) #connect qv2 button to function qv2
-    btn_QD.clicked.connect(qd) #connect quickdisconnect button to function qd
-    btn_arm.clicked.connect(arm) #connect arm button to function arm
-    btn_ignite.clicked.connect(ignite) #connect ignite button to function ignite
-    btn_save.clicked.connect(start_save) #connect save button to function start_save
-    btn_finish.clicked.connect(finish_operation)
+#rows below organize the layouts
+l1.addLayout(l5)
+l4.addLayout(l6)
+l2.addLayout(l3)
+l2.addLayout(l1)
+l2.addLayout(l4)
 
-    l3.addWidget(btn_QV1)
-    l3.addWidget(btn_QV2)
-    l3.addWidget(btn_QD)
-    l3.addWidget(btn_arm)
-    l3.addWidget(btn_ignite)
-    l3.addWidget(btn_save)
-    l3.addWidget(btn_finish)
+mw.showMaximized() #open the main window in full screen
 
-    l4.addWidget(pw3)
-    l4.addWidget(pw7)
+x = list(np.zeros(200))  # 100 time points    
+y = list(np.zeros(200))  # 100 data points
+z = list(np.zeros(200))  # 100 data points
+a = list(np.zeros(200))  # 100 data points
+b = list(np.zeros(200))  # 100 data points
 
-    l1.addWidget(pw1)
-    l1.addWidget(pw5)
+pen1 = pg.mkPen(color=(255, 0, 0))
+pen2 = pg.mkPen(color=(0, 255, 0))
 
-    #rows below organize the layouts
-    l1.addLayout(l5)
-    l4.addLayout(l6)
-    l2.addLayout(l3)
-    l2.addLayout(l1)
-    l2.addLayout(l4)
+data_line_1 = pw1.plot(x,y,pen = pen2)
+data_line_3 =  pw3.plot(x, z, pen=pen2)
 
-    mw.showMaximized() #open the main window in full screen
-   
-    x = list(np.zeros(200))  # 100 time points    
-    y = list(np.zeros(200))  # 100 data points
-    z = list(np.zeros(200))  # 100 data points
-    a = list(np.zeros(200))  # 100 data points
-    b = list(np.zeros(200))  # 100 data points
-    
-    pen1 = pg.mkPen(color=(255, 0, 0))
-    pen2 = pg.mkPen(color=(0, 255, 0))
+engine_data_line_1 = pw5.plot(x,a,pen = pen1)
+engine_data_line_3 =  pw7.plot(x, b, pen=pen1)
 
-    data_line_1 = pw1.plot(x,y,pen = pen2)
-    data_line_3 =  pw3.plot(x, z, pen=pen2)
+#Set timer
+timer = QtCore.QTimer()
+timer.setInterval(50)
+timer.timeout.connect(update)
 
-    engine_data_line_1 = pw5.plot(x,a,pen = pen1)
-    engine_data_line_3 =  pw7.plot(x, b, pen=pen1)
+pg.exec()
 
-    #Set timer
-    timer = QtCore.QTimer()
-    timer.setInterval(50)
-    timer.timeout.connect(update)
-    timer.start()
-
-    pg.exec()
-
-    # if save_status: #check if the csv still being edited
-    # save_status = not save_status #the save_status get changed
-    # line_state_data.close() #close the csv file
+# if save_status: #check if the csv still being edited
+# save_status = not save_status #the save_status get changed
+# line_state_data.close() #close the csv file
