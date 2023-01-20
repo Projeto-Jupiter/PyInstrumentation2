@@ -1,4 +1,4 @@
-int sensorPin = A0;
+int sensorPin = A5;
 
 void setup() {
   // put your setup code here, to run once:
@@ -18,8 +18,8 @@ void loop() {
   float pressure = 0.246*sensorValue - 45.208;  
 
   // print out the pressure:
-  Serial.println(pressure);
+  Serial.println(sensorValue);
 
   // delay in between reads for stability
-  delay(1000);  
+  delay(100);  
 }
