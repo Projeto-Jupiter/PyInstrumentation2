@@ -132,7 +132,7 @@ def update():
 
     global x,a,b,data,s
     
-    data[0:3] = pickle.loads(s.recv(256))[0:3]
+    data[0:3] = pickle.loads(s.recv(1024))[0:3]
     
     x = x[1:]
     x.append(data[0])
@@ -150,9 +150,11 @@ def update():
 
     s.sendall(pickle.dumps(data))
     
-    print(data)
+    # print(data)
+    
+    print(sys.getsizeof(_))
 
-    data[0:3] = pickle.loads(s.recv(1024))[0:3]
+    data[0:3] = pickle.loads(s.recv(256))[0:3]
     s.sendall(pickle.dumps(data))
 
 now, data_name,line_state_data,w,save_status,tn,s = [0,0,0,0,False,0,0] #gambiarra
@@ -160,7 +162,7 @@ data = [0,0,0,0,0]
 
 
 HOST = '192.168.1.100'    # The remote host
-PORT = 50005              # The same port as used by the server
+PORT = 50002              # The same port as used by the server
 
 
 user = 'almentacaohibrido'
@@ -228,8 +230,8 @@ x = list(np.zeros(200))  # 100 time points
 a = list(np.zeros(200))  # 100 data points
 b = list(np.zeros(200))  # 100 data points
 
-pen1 = pg.mkPen(color=(79, 105, 198))
-pen2 = pg.mkPen(color=(255, 198, 115))
+pen1 = pg.mkPen(color=(255, 255, 0))
+pen2 = pg.mkPen(color=(255, 255, 255))
 
 engine_data_line_1 = pw5.plot(x,a,pen = pen2)
 engine_data_line_3 =  pw7.plot(x,b, pen=pen1)
