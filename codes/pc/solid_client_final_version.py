@@ -6,15 +6,15 @@ from pyqtgraph.Qt import QtCore, QtWidgets
 def start_operation():
     global HOST, PORT, user, password, tn, s, timer
     
-    tn = telnetlib.Telnet(HOST)
+    # tn = telnetlib.Telnet(HOST)
 
-    tn.read_until(b"login: ")
-    tn.write(user.encode('ascii') + b"\n")
+    # tn.read_until(b"login: ")
+    # tn.write(user.encode('ascii') + b"\n")
 
-    tn.read_until(b"Password: ")
-    tn.write(password.encode('ascii') + b"\n")
+    # tn.read_until(b"Password: ")
+    # tn.write(password.encode('ascii') + b"\n")
 
-    tn.write(b'/bin/python3 /home/almentacaohibrido/Desktop/solid_server_final_version.py\n')
+    # tn.write(b'/bin/python3 /home/almentacaohibrido/Desktop/solid_server_final_version.py\n')
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -152,7 +152,7 @@ def update():
     
     # print(data)
     
-    print(sys.getsizeof(_))
+    print(sys.getsizeof(_)) # gambiarra. O plot dos gráficos fica lento sem esse erro
 
     data[0:3] = pickle.loads(s.recv(256))[0:3]
     s.sendall(pickle.dumps(data))

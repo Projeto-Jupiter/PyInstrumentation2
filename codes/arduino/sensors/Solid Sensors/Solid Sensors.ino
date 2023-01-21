@@ -1,41 +1,31 @@
 #include "HX711.h"
+
 #define DT A1
 #define SCK A0
+#define transducerPin A3
+
 
 HX711 escala; // Relaciona a variável escala
 
-int transducerPin = A3;
-
 void setup() {
-  // put your setup code here, to run once:
-  // initialize serial communication at 9600 bits per second:
-  Serial.begin(9600);
+ escala.begin (DT, SCK);
+ Serial.begin(9600);
 
-  escala.begin (DT, SCK);
-  Serial.begin(9600);
-  escala.set_scale(436); // Utiliza uma escala padrão de verificação
-
-  escala.tare(10); // Fixa o peso como tara
+ escala.set_scale(436); // Utiliza uma escala padrão de verificação
+ escala.tare(); // Fixa o peso como tara
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  int pressureBits = analogRead(transducerPin);
+  float pressureBar = -73.9 + 0.423*pressureBits -2.75*pow(10,-4)*pow(pressureBits,2)+1.21*pow(10,-7)*pow(pressureBits,3);
 
-  // read the input on analog pin 0:
-  int transducerValue = analogRead(transducerPin);
 
-  // transform analog read into temperature, using the cailbration table 
-  // and function, got from comparing with a calibrated pump
-  // data: [p(kgf/cm2), bits; 27, 289; 30, 306; 50, 386; 59, 415; 70, 464]
-  float pressure = 0.246*transducerValue - 45.208;  
-
-  // print out the pressure:
   Serial.print(millis());
   Serial.print(",");
-  Serial.print(escala.get_units()); // print the loadcell value
+  Serial.print(escala.get_units(10)); // Retorna peso descontada a tara
   Serial.print(",");
-  Serial.println(pressure);
+  Serial.println(pressureBar);
 
-  // delay in between reads for stability
-  delay(50);  
+
+ delay(50);
 }
