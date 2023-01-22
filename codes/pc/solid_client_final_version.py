@@ -151,12 +151,15 @@ def update():
 
     s.sendall(pickle.dumps(data))
     
+    if save_status:
+        w.writerow(data)
+
     # print(data)
     
-    print(sys.getsizeof(_)) # gambiarra. O plot dos gráficos fica lento sem esse erro
+    # print(sys.getsizeof(_)) # gambiarra. O plot dos gráficos fica lento sem esse erro
 
-    data[0:3] = pickle.loads(s.recv(256))[0:3]
-    s.sendall(pickle.dumps(data))
+    # data[0:3] = pickle.loads(s.recv(256))[0:3]
+    # s.sendall(pickle.dumps(data))
 
 now, data_name,line_state_data,w,save_status,tn,s = [0,0,0,0,False,0,0] #gambiarra
 data = [0,0,0,0,0]
@@ -239,7 +242,7 @@ engine_data_line_3 =  pw7.plot(x,b, pen=pen1)
 
 #Set timer
 timer = QtCore.QTimer()
-timer.setInterval(50)
+timer.setInterval(25)
 timer.timeout.connect(update)
 
 pg.exec()
