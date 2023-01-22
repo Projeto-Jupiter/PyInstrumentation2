@@ -17,14 +17,10 @@ void setup() {
 
 void loop() {
   int pressureBits = analogRead(transducerPin);
-  float pressureBar = -73.9 + 0.423*pressureBits -2.75*pow(10,-4)*pow(pressureBits,2)+1.21*pow(10,-7)*pow(pressureBits,3);
+  float pressureBar = 0.305*pressureBits - 45.3;
 
 
-  Serial.print(millis());
-  Serial.print(",");
-  Serial.print(escala.get_units(10)); // Retorna peso descontada a tara
-  Serial.print(",");
-  Serial.println(pressureBar);
+  Serial.println((String)millis() + "," + (String)escala.get_units() + "," + (String)pressureBar);
 
 
  delay(50);

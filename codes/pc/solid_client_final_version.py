@@ -6,15 +6,15 @@ from pyqtgraph.Qt import QtCore, QtWidgets
 def start_operation():
     global HOST, PORT, user, password, tn, s, timer
     
-    # tn = telnetlib.Telnet(HOST)
+    tn = telnetlib.Telnet(HOST)
 
-    # tn.read_until(b"login: ")
-    # tn.write(user.encode('ascii') + b"\n")
+    tn.read_until(b"login: ")
+    tn.write(user.encode('ascii') + b"\n")
 
-    # tn.read_until(b"Password: ")
-    # tn.write(password.encode('ascii') + b"\n")
+    tn.read_until(b"Password: ")
+    tn.write(password.encode('ascii') + b"\n")
 
-    # tn.write(b'/bin/python3 /home/almentacaohibrido/Desktop/solid_server_final_version.py\n')
+    tn.write(b'/bin/python3 /home/almentacaohibrido/Desktop/solid_server_final_version.py\n')
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -61,6 +61,7 @@ def disarm():
 
     print('Ignitor Disarmed')
     data[3] = False #set Arm state element as False
+    data[4] = False #set Ignite state element as False
     btn_ignite.setEnabled(False) #disable Igniton button
     btn_save.setEnabled(True) #enable Stop Saving button
     btn_arm.setText('Arm') #text in Disarm button gets changed to 'Arm'
@@ -146,7 +147,7 @@ def update():
     engine_data_line_1.setData(x,a)
     engine_data_line_3.setData(x,b)
 
-    # print(data)
+    print(data)
 
     s.sendall(pickle.dumps(data))
     
