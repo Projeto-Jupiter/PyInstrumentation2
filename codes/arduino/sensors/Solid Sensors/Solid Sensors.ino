@@ -9,7 +9,7 @@ HX711 escala; // Relaciona a variável escala
 
 void setup() {
  escala.begin (DT, SCK);
- Serial.begin(57600);
+ Serial.begin(115200);
 
  escala.set_scale(436); // Utiliza uma escala padrão de verificação
  escala.tare(50); // Fixa o peso como tara
@@ -23,5 +23,5 @@ void loop() {
   Serial.println((String)millis() + "," + (String)escala.get_units() + "," + (String)pressureBar);
 
 
- delay(25);
+//  delay(25);
 }

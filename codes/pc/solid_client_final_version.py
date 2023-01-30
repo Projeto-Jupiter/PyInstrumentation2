@@ -82,7 +82,7 @@ def start_save():
     global now, data_name,line_state_data,w,btn_save,save_status
 
     now = datetime.datetime.now() #sla pq precisa disso, mas precisa
-    data_name = now.strftime("%Y_%m_%d__%H_%M_%S") #save current data and time in a variable
+    data_name = now.strftime("filtered_data_pc_%Y_%m_%d__%H_%M_%S") #save current data and time in a variable
     line_state_data = open('c:/Users/55989/OneDrive/Documentos/GitHub/PyIntrumentation2/codes/pc/Data/%s.csv'%data_name, 'w', newline='', encoding='utf-8') #creates csv file
     w = csv.writer(line_state_data) #creates the variable that will write in csv
     btn_save.setText('Stop Saving') #chnge the texte in save button to Stop Saving
@@ -112,7 +112,7 @@ def finish_operation():
     if save_status: #check if the csv still being edited
         stop()
 
-    s.sendall(pickle.dumps([0,0,0,0,0]))   
+    s.sendall(pickle.dumps([0,0,0,0,0,0]))   
     timer.stop()
     tn.write(b'\x03\n')
 
@@ -135,19 +135,19 @@ def update():
     
     data[0:3] = pickle.loads(s.recv(1024))[0:3]
     
-    x = x[1:]
-    x.append(data[0])
+    if data[0] > x[-1]:
+        x = x[1:]
+        x.append(data[0])
     
-    a = a[1:]
-    a.append(data[1])
+        a = a[1:]
+        a.append(data[1])
 
-    b = b[1:]
-    b.append(data[2])
+        b = b[1:]
+        b.append(data[2])
+
     
     engine_data_line_1.setData(x,a)
     engine_data_line_3.setData(x,b)
-
-    print(data)
 
     s.sendall(pickle.dumps(data))
     
@@ -162,12 +162,11 @@ def update():
     # s.sendall(pickle.dumps(data))
 
 now, data_name,line_state_data,w,save_status,tn,s = [0,0,0,0,False,0,0] #gambiarra
-data = [0,0,0,0,0]
+data = [0,0,0,0,0,1]
 
 
-HOST = '192.168.1.100'    # The remote host
-PORT = 50002              # The same port as used by the server
-
+HOST = '192.168.1.30'    # The remote host
+PORT = 50007              # The same port as used by the server
 
 user = 'almentacaohibrido'
 password = 'h1br1_pr0p'
@@ -176,7 +175,7 @@ password = 'h1br1_pr0p'
 app = pg.mkQApp() #create app variable
 
 mw = QtWidgets.QMainWindow() #criate main window variable
-mw.setWindowTitle('Hybrid Control GUI') #set window title
+mw.setWindowTitle('Solid Instrumentation GUI') #set window title
 cw = QtWidgets.QWidget() #create central widget
 mw.setCentralWidget(cw) #set central widget
 
@@ -230,9 +229,9 @@ l2.addLayout(l1)
 
 mw.showMaximized() #open the main window in full screen
 
-x = list(np.zeros(200))  # 100 time points    
-a = list(np.zeros(200))  # 100 data points
-b = list(np.zeros(200))  # 100 data points
+x = list(np.zeros(500))  # 100 time points    
+a = list(np.zeros(500))  # 100 data points
+b = list(np.zeros(500))  # 100 data points
 
 pen1 = pg.mkPen(color=(255, 255, 0))
 pen2 = pg.mkPen(color=(255, 255, 255))
@@ -242,7 +241,7 @@ engine_data_line_3 =  pw7.plot(x,b, pen=pen1)
 
 #Set timer
 timer = QtCore.QTimer()
-timer.setInterval(25)
+timer.setInterval(5)
 timer.timeout.connect(update)
 
 pg.exec()
