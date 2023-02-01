@@ -73,7 +73,7 @@ def ignite():
     """Event activated by clicking in the Ignite button.
     Actions not well defined in this mockup yet."""
     data[4] = True
-    btn_save.setEnabled(True) #enable Save Data button
+    disarm()
 
 def start_save():
     """Event activated by clicking in the Save Data button.
