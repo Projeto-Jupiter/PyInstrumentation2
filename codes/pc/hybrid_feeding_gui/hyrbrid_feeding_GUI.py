@@ -9,30 +9,49 @@ import datetime
 import csv
 
 #Functions
+def start_operation():
+    global HOST, PORT, user, password, tn, s, timer
+    
+    btn_start.setEnabled(False)
+    btn_None.setEnabled(True)
+    btn_None.setChecked(True)
+    btn_QV1.setEnabled(True)
+    btn_QV2.setEnabled(True)
+    btn_QD.setEnabled(True)
+    btn_save.setEnabled(True)
+    btn_finish.setEnabled(True)
+
+
+
+    timer.start() 
+
+
+def none_valve():
+    pass
 def qv1(toggled):
     """Event activated by the slection of the QV1 toggle.
     If toggled, the element referent of QV1 valve satate is set as True, else, it is set as False."""
     
-    global line_state
+    global data
     
     if toggled: #check if it is toggled
-        line_state[3] = True #set QV1 valve state element as True if toggled
+        data[3] = True #set QV1 valve state element as True if toggled
         print ('QV1 on')
     else:
-        line_state[3] = False #set QV1 valve state element as True if not toggled
+        data[3] = False #set QV1 valve state element as True if not toggled
         print('QV1 off')
 
 def qv2(toggled):
     """Event activated by the slection of the QV2 toggle.
     If toggled, the element referent of QV2 valve satate is set as True, else, it is set as False."""
 
-    global line_state
+    global data
     
     if toggled: #check if it is toggled
-        line_state[4] = True #set QV2 valve state element as True if toggled
+        data[4] = True #set QV2 valve state element as True if toggled
         print ('QV2 on')
     else:
-        line_state[4] = False #set QV2 valve state element as True if not toggled
+        data[4] = False #set QV2 valve state element as True if not toggled
         print('QV2 off')
 
 def qd():
@@ -44,7 +63,7 @@ def qd():
     global btn_QV1, btn_QV2
 
     print('Quick Disconnect Activated')
-    line_state[5] = True #set QD state element as True
+    data[5] = True #set QD state element as True
     btn_QV2.setChecked(True) #toggle QV2 button
     btn_arm.setEnabled(True) #enable Arm button
 
@@ -60,7 +79,7 @@ def arm():
     global btn_ignite, btn_arm, btn_QD, btn_QV1, btn_QV2, pw1, pw2, pw3, pw4, pw5, pw6, pw7, pw8, dw1, dw2, dw3, dw4, l1, l4, l5, l6
 
     print('Ignitor Armed')
-    line_state[6] = True #set Arm state element as True
+    data[6] = True #set Arm state element as True
     btn_QV1.setEnabled(False) #disable QV1 button
     btn_QV2.setEnabled(False) #disable QV2 button
     btn_QD.setEnabled(False) #disable QD button
@@ -83,7 +102,7 @@ def disarm():
     global btn_ignite, btn_arm, btn_QD
 
     print('Ignitor Disarmed')
-    line_state[6] = False #set Arm state element as False
+    data[6] = False #set Arm state element as False
     btn_QV1.setEnabled(True) #enable QV1 button
     btn_QV2.setEnabled(True) #enable QV2 button
     btn_QD.setEnabled(True)  #enable QD button
@@ -129,8 +148,29 @@ def stop():
     btn_save.clicked.disconnect(stop) #stop event gets disconnected to the Save Data button variable
     btn_save.clicked.connect(start_save)  #start_save event gets connected from the Save Data button variable
 
+def finish_operation():
+    
+    global s,timer
+    timer.stop()
+    if save_status: #check if the csv still being edited
+        stop()
+
+    btn_None.setEnabled(False)
+    btn_None.setChecked(True)
+    btn_QV1.setEnabled(False)
+    btn_QV2.setEnabled(False)
+    btn_QD.setEnabled(False)
+    btn_save.setEnabled(False)
+    btn_finish.setEnabled(False)
+    btn_shutdown.setEnabled(True)
+
+    
+
+def shutdown_rpi():
+    pass
+
 def update():
-    global x, y, x1, y1, z, z1, k, a, k1, a1, b, b1, line_state
+    global x, y, x1, y1, z, z1, k, a, k1, a1, b, b1, data
     
     t = 1000*(time.time() - t0)
     x1 = x1[1:]  # Remove the first y element.
@@ -150,12 +190,9 @@ def update():
     data_line_2.setData(x, z)  # Update the data.
     data_line_3.setData(x1,z1)
 
-    dw1.setText('Temperature in Line Now: %s'%line_state[1])
-    dw2.setText('Pressure in Line Now: %s'%line_state[2])
-
-    line_state[0] = t
-    line_state[1] = y[len(y)-1]
-    line_state[2] = z[len(z)-1]
+    data[0] = t
+    data[1] = y[len(y)-1]
+    data[2] = z[len(z)-1]
 
     k1 = k1[1:]  # Remove the first y element.
     k1.append(round(t))  # Add a new value 1 higher than the last.
@@ -175,15 +212,13 @@ def update():
     engine_data_line_3.setData(k1,b1)
 
     if save_status:
-        w.writerow(line_state)
+        w.writerow(data)
 
 
 
 #Def important parameters
-now, data_name,line_state_data,w,save_status = [0,0,0,0,0] #gambiarra
-
-line_state = [0,0,0,0,0,0,0]    #[time, temperature, pressure, qv1, qv2, quickdisconnect, arm]
-motor_state = [0,0,0]   #[time, thrust, pressure]
+now, data_name,line_state_data,w,save_status,tn,s= [0,0,0,0,False,0,0] #gambiarra
+data = [0,0,0,0,0,0,0,0,0,0]
 
 t0 =time.time() #salva o instante em que o programa iniciou
 
@@ -196,15 +231,19 @@ cw = QtWidgets.QWidget() #create central widget
 mw.setCentralWidget(cw) #set central widget
 
 #the rows below create some layouts
-l1 = QtWidgets.QVBoxLayout() 
+line_container = QtWidgets.QWidget()
+engine_container = QtWidgets.QWidget()
+
+tabs = QtWidgets.QTabWidget()
+
+l1 = QtWidgets.QVBoxLayout(engine_container) 
 l2 = QtWidgets.QHBoxLayout()
 l3 = QtWidgets.QVBoxLayout()
-l4 = QtWidgets.QVBoxLayout()
-l5 = QtWidgets.QHBoxLayout()
+l4 = QtWidgets.QVBoxLayout(line_container)
+l5 = QtWidgets.QVBoxLayout()
 l6 = QtWidgets.QHBoxLayout()
 l7 = QtWidgets.QVBoxLayout()
 l8 = QtWidgets.QVBoxLayout()
-
 
 
 cw.setLayout(l2) #set layout l2 as the central widget layout
@@ -221,56 +260,64 @@ pw8 = pg.PlotWidget(name='Plot8',title="Engine Pressure Throughout Operation",la
 
 
 #rows below creates some buttons
+btn_start = QtWidgets.QPushButton('Start Operation')
+btn_None = QtWidgets.QRadioButton('None')
+btn_None.setEnabled(False)
 btn_QV1 = QtWidgets.QRadioButton('QV1')
+btn_QV1.setEnabled(False)
 btn_QV2 = QtWidgets.QRadioButton('QV2')
+btn_QV2.setEnabled(False)
 btn_QD = QtWidgets.QPushButton('Quick Disconnect')
+btn_QD.setEnabled(False)
 btn_arm = QtWidgets.QPushButton('Arm')
 btn_arm.setEnabled(False) #disable arm button as default
 btn_ignite = QtWidgets.QPushButton('Ignite')
 btn_ignite.setEnabled(False) #disable ignite button as default
-btn_save = QtWidgets.QPushButton('Save Data')
+btn_save = QtWidgets.QPushButton('Save Data') 
+btn_save.setEnabled(False)
+btn_finish = QtWidgets.QPushButton('Finish Operation')
+btn_finish.setEnabled(False)
+btn_shutdown = QtWidgets.QPushButton('Shutdown RPi')
+btn_shutdown.setEnabled(False)
 
 #rows below associate events to buttons
+btn_start.clicked.connect(start_operation)
+btn_None.toggled.connect(none_valve) #connect qv1 button to function qv1
 btn_QV1.toggled.connect(qv1) #connect qv1 button to function qv1
 btn_QV2.toggled.connect(qv2) #connect qv2 button to function qv2
 btn_QD.clicked.connect(qd) #connect quickdisconnect button to function qd
 btn_arm.clicked.connect(arm) #connect arm button to function arm
 btn_ignite.clicked.connect(ignite) #connect ignite button to function ignite
 btn_save.clicked.connect(start_save) #connect save button to function start_save
+btn_finish.clicked.connect(finish_operation)
+btn_shutdown.clicked.connect(shutdown_rpi)
 
-#rows below create some label widgets
-dw1 = QtWidgets.QLabel('Temperature in Line Now: %s K'%line_state[1])
-dw2 = QtWidgets.QLabel('Pressure in Line Now: %s bar'%line_state[2])
-dw3 = QtWidgets.QLabel('MaximumTemperature Acecptable in Line : 350 K')
-dw4 = QtWidgets.QLabel('Maximum Pressure Acecptable in Line: 60 bar') 
-
-#rows below add the widgets to the respective layouts
-l5.addWidget(dw1)
-l5.addWidget(dw3)
-
-l6.addWidget(dw2)
-l6.addWidget(dw4)
-
-
+l3.addWidget(btn_start)
+l3.addWidget(btn_None)
 l3.addWidget(btn_QV1)
 l3.addWidget(btn_QV2)
 l3.addWidget(btn_QD)
 l3.addWidget(btn_arm)
 l3.addWidget(btn_ignite)
 l3.addWidget(btn_save)
+l3.addWidget(btn_finish)
+l3.addWidget(btn_shutdown)
 
+l4.addWidget(pw1)
 l4.addWidget(pw3)
-l4.addWidget(pw7)
 
-l1.addWidget(pw1)
 l1.addWidget(pw5)
+l1.addWidget(pw7)
 
+
+tabs.addTab(line_container, 'Line')
+tabs.addTab(engine_container, 'Engine')
+
+l5.addWidget(tabs)
 #rows below organize the layouts
-l1.addLayout(l5)
 l4.addLayout(l6)
 l2.addLayout(l3)
-l2.addLayout(l1)
-l2.addLayout(l4)
+l2.addLayout(l5)
 
 
 mw.showMaximized() #open the main window in full screen
@@ -309,7 +356,6 @@ engine_data_line_2 = pw8.plot(k1,b1,pen = pen4)
 timer = QtCore.QTimer()
 timer.setInterval(50)
 timer.timeout.connect(update)
-timer.start()
 
 
 pg.exec()
