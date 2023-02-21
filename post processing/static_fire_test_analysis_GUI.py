@@ -267,6 +267,46 @@ class MainWindow(QMainWindow, MplCanvas):
         self.thrust_filtered = signal.savgol_filter(self.thrust_filtered, 51, 3)
         self.pressure_filtered = signal.savgol_filter(self.pressure_filtered, 51, 3)
 
+        #get the maximuns of the thrust and pressure data
+        self.thrust_max = max(self.thrust_filtered)
+        self.pressure_max = max(self.pressure_filtered)
+
+        #get the average thrust and pressure
+        self.thrust_avg = np.mean(self.thrust_filtered)
+        self.pressure_avg = np.mean(self.pressure_filtered)
+
+        #evaulate the total impulse value by integrating the filtered thrust data
+        self.total_impulse = integrate.trapz(self.thrust_filtered, self.time_filtered)
+
+        #evaluate isp by dividing the total impulse by the propellant weight
+        self.isp = self.total_impulse/(self.propellant_mass*9.81)
+
+        #calculate the medium exhaust velocity
+        self.ve = self.isp*9.81
+
+        #calculate the mass flow rate
+        self.mass_flow_rate = self.thrust_filtered/self.ve
+
+        #evaluate the propellant mass through time by integration of the mass flow rate
+        self.propellant_mass_time = []
+        for i in range(len(self.time_filtered)):
+            self.propellant_mass_time.append(self.propellant_mass - integrate.trapz(self.mass_flow_rate[:i], self.time_filtered[:i]))
+
+        #add the diferenche between the propellant mass and the propellant mass through time to the thrust data
+        for i in range(len(self.thrust_filtered)):
+            self.thrust_filtered[i] = self.thrust_filtered[i] + self.propellant_mass - self.propellant_mass_time[i]
+
+        #evaluate again the total impulse value by integrating the filtered thrust data
+        self.total_impulse = integrate.trapz(self.thrust_filtered, self.time_filtered)
+
+        #evaluate again the isp by dividing the total impulse by the propellant weight
+        self.isp = self.total_impulse/(self.propellant_mass*9.81)
+
+        #evaluate again the average and maximum thrust
+        self.thrust_avg = np.mean(self.thrust_filtered)
+        self.thrust_max = max(self.thrust_filtered)
+
+
         #plot the filtered thrust and pressure data in the same mplcanvas with two different y axes
         self.mplCanvas.axes.clear()
         #add a title to the plot
@@ -283,20 +323,6 @@ class MainWindow(QMainWindow, MplCanvas):
         self.mplCanvas.axes.grid()
         #redraw the plot
         self.mplCanvas.draw()
-
-        #get the maximuns of the thrust and pressure data
-        self.thrust_max = max(self.thrust_filtered)
-        self.pressure_max = max(self.pressure_filtered)
-
-        #get the average thrust and pressure
-        self.thrust_avg = np.mean(self.thrust_filtered)
-        self.pressure_avg = np.mean(self.pressure_filtered)
-
-        #evaulate the total impulse value by integrating the filtered thrust data
-        self.total_impulse = integrate.simps(self.thrust_filtered, self.time_filtered)
-
-        #evaluate isp by dividing the total impulse by the propellant weight
-        self.isp = self.total_impulse/(self.propellant_mass*9.81)
 
         #update values QLabels with the calculated values
         self.max_thrust_value.setText('{:.0f}N at {:.2f}s'.format(self.thrust_max, self.time_filtered[np.argmax(self.thrust_filtered)]))
