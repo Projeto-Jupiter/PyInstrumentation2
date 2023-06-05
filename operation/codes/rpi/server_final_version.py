@@ -1,5 +1,6 @@
 import serial,time,socket,pickle
 import RPi.GPIO as GPIO
+import os
 
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(40, GPIO.OUT, initial=GPIO.LOW)           # set GPIO24 as an output   
@@ -13,6 +14,12 @@ HOST = '192.168.1.100'                 # Symbolic name meaning all available int
 PORT = 50005              # Arbitrary non-privileged port
 serial_state = False
 
+
+def getAvailableACMPort():
+    port = os.system('ls /dev/ttyACM*') #Should have only one ACM port here 
+    print('Available port at: {}'.format(port))
+    return port
+
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.bind((HOST, PORT))
     s.listen(1)
@@ -20,7 +27,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     with conn:
         print('Connected by', addr)
 
-        with serial.Serial("/dev/ttyACM0", 9600, timeout=1) as arduino:
+        with serial.Serial(getAvailableACMPort(), 9600, timeout=1) as arduino:
             time.sleep(0.1) #wait for serial to open
             if arduino.isOpen():
                 print("{} connected!".format(arduino.port))
